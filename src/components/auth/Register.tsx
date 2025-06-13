@@ -1,7 +1,6 @@
 
 import React, { memo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form'; 
 import { registerUser } from '../../api/authApi';
 import {
   Box,
@@ -27,19 +26,63 @@ const Register = ({activeTab,setActiveTab}:{activeTab:number,setActiveTab:any}) 
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [showPassword, setShowPassword] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const navigate = useNavigate();
+  
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setProfileImage(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(e.target.files[0]);
+  // const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (e.target.files && e.target.files[0]) {
+  //     const reader = new FileReader();
+  //     reader.onload = (event) => {
+  //       if (event.target?.result) {
+  //         setProfileImage(event.target.result as string);
+  //       }
+  //     };
+  //     reader.readAsDataURL(e.target.files[0]);
+  //   }
+  // };
+
+  const uploadImageToImgBB = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const API_KEY = "664d33d55fe9d05468f640823bd36ad1"; // Replace with real API key from imgbb.com
+
+
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (data.success) {
+    return data.data.url; // This is a hosted image URL
+  } else {
+    throw new Error("Image upload failed.");
+  }
+};
+
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files[0]) {
+    const file = e.target.files[0];
+
+    // show preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setProfileImage(event.target.result as string); // for local preview
+      }
+    };
+    reader.readAsDataURL(file);
+
+    try {
+      const uploadedUrl = await uploadImageToImgBB(file);
+      setProfileImage(uploadedUrl); // This will go in your registerUser API
+    } catch (error) {
+      console.error("Upload failed:", error);
     }
-  };
+  }
+};
+
 
   const onSubmit = async (data: any) => {
     try {
@@ -47,9 +90,10 @@ const Register = ({activeTab,setActiveTab}:{activeTab:number,setActiveTab:any}) 
         ...data,
         profileImage: profileImage || undefined
       };
-      const user = await registerUser(userData);
-      console.log('Registered:', user);
-      navigate('/dashboard');
+      await registerUser(userData);  
+        setActiveTab(0)
+        alert("registeration success now login")
+        
     } catch (err: any) {
       console.error('Registration error:', err.message);
     }
@@ -240,10 +284,7 @@ const Register = ({activeTab,setActiveTab}:{activeTab:number,setActiveTab:any}) 
               Sign Up
             </Button>
           </form>
-                    <BottomContent activeTab={activeTab} setActiveTab={setActiveTab} />
-          
-
-       
+        <BottomContent activeTab={activeTab} setActiveTab={setActiveTab} /> 
         </Box>
       </motion.div>
     </Box>

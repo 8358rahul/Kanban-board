@@ -1,13 +1,8 @@
 import {
   Box,
-  Tabs,
-  Tab,
-  Paper,
-  useTheme,
-  styled,
-  Typography,
-  Link,
   Button,
+  Link,
+  Typography
 } from "@mui/material";
 export const BottomContent = ({activeTab,setActiveTab}:{activeTab:number,setActiveTab:any}) => {
   return (

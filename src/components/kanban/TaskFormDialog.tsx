@@ -19,29 +19,35 @@ const TaskFormDialog = ({ open, onClose, userId, task }:TaskFormDialogProps) => 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<Task>({
     defaultValues: task || {
       name: '',
-      priority: 'medium',
-      deadline: new Date().toISOString().split('T')[0],
+      priority:'medium',
+      deadline: '',
       stage: 0,
     }
   }); 
   const [error, setError] = useState('');
+  const [loading,setLoading] = useState(false)
 
   const onSubmit = async (data: Task) => { 
     try {
+       setLoading(true)
       if (task) {
-        // Update existing task
+        // Update existing task 
         const updatedTask = await updateTask({
           ...task,
           ...data
         });
         dispatch(updateTaskStore(updatedTask));
+       
+
       } else {
-        // Create new task
+        // Create new task 
+
         const newTask = await createTask({
           ...data,
           userId,
         });
-        dispatch(addTask(newTask));
+        dispatch(addTask(newTask)); 
+
       }
       handleClose();
     } catch (err) {
@@ -50,6 +56,7 @@ const TaskFormDialog = ({ open, onClose, userId, task }:TaskFormDialogProps) => 
   };
 
   const handleClose = () => {
+     setLoading(false)
     reset();
     setError('');
     onClose();
@@ -77,8 +84,8 @@ const TaskFormDialog = ({ open, onClose, userId, task }:TaskFormDialogProps) => 
               select
               label="Priority"
               {...register('priority')}
-              fullWidth
-              defaultValue={task ? task.priority : 'medium'}
+              fullWidth 
+              defaultValue={task?task.priority:"medium"}
             >
               <MenuItem value="high">High</MenuItem>
               <MenuItem value="medium">Medium</MenuItem>
@@ -98,7 +105,7 @@ const TaskFormDialog = ({ open, onClose, userId, task }:TaskFormDialogProps) => 
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button type="submit" variant="contained">
+          <Button type="submit" variant="contained" loading={loading}>
             {task ? 'Update' : 'Create'}
           </Button>
         </DialogActions>

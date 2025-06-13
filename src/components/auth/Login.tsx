@@ -1,4 +1,4 @@
-import { useState,useEffect,memo } from "react";
+import { useState, useEffect, memo } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../../api/authApi";
@@ -6,7 +6,7 @@ import {
   Box,
   Button,
   TextField,
-  Typography, 
+  Typography,
   InputAdornment,
   IconButton,
 } from "@mui/material";
@@ -21,8 +21,15 @@ import { useAppDispatch } from "../../store/hooks";
 import { loginSuccess } from "../../store/authSlice";
 import type { User } from "../../types/authTypes";
 import { BottomContent } from "./BottomContent";
+import logo from "../../assets/logo.png";
 
-const Login = ({activeTab,setActiveTab}:{activeTab:number,setActiveTab:any}) => {
+const Login = ({
+  activeTab,
+  setActiveTab,
+}: {
+  activeTab: number;
+  setActiveTab: any;
+}) => {
   const {
     register,
     handleSubmit,
@@ -32,7 +39,8 @@ const Login = ({activeTab,setActiveTab}:{activeTab:number,setActiveTab:any}) => 
   const [showPassword, setShowPassword] = useState(false);
   const [captcha, setCaptcha] = useState("");
   const [userCaptcha, setUserCaptcha] = useState("");
-  const [userList, setUserList] = useState<User[]>([]); 
+  const [userList, setUserList] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -65,44 +73,54 @@ const Login = ({activeTab,setActiveTab}:{activeTab:number,setActiveTab:any}) => 
       generateCaptcha();
       return;
     }
-
+setLoading(true)
     const userExists = userList.find(
-      (user) => user.email === data.email && user.password === data.password
-    ); 
+      (user) =>
+        (user.email === data.email || user.username === data.email) &&
+        user.password === data.password
+    );
     if (!userExists) {
-      setError("Invalid email or password");
+      setError("Invalid email/username or password");
+      setLoading(false);
       return;
     }
     localStorage.setItem("user", JSON.stringify(userExists));
     dispatch(loginSuccess(userExists));
+    setLoading(false);
     navigate("/dashboard");
   };
 
   return (
-     <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center">
+    <Box display="flex" justifyContent="center" alignItems="center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-      
-        <Box  
+        <Box
+          alignItems={"center"}
+          justifyContent={"center"}
           sx={{
             width: 400,
             bgcolor: "background.paper",
             borderRadius: 4,
-            boxShadow: 24, 
+            boxShadow: 24,
             p: 4,
           }}
         >
-            <img
-          src="https://upload.wikimedia.org/wikipedia/commons/4/47/React.svg"
-          alt="React Logo"
-          style={{ width: 100, height: 100, marginBottom: 20 }}
-        />
+          <img
+            src={logo}
+            style={{
+              width: 100,
+              height: 100,
+              marginBottom: 20,
+              display: "block",
+              marginLeft: "auto",
+              marginRight: "auto",
+            }}
+            alt="Logo"
+          />
+
           {error && (
             <Typography color="error" textAlign="center" mb={2}>
               {error}
@@ -113,13 +131,13 @@ const Login = ({activeTab,setActiveTab}:{activeTab:number,setActiveTab:any}) => 
             <Box mb={3}>
               <TextField
                 fullWidth
-                label="Email"
+                label="Username/Email"
                 variant="outlined"
                 {...register("email", { required: "Required" })}
-                error={!!errors.usernameOrEmail}
+                error={!!errors.email}
                 helperText={
-                  typeof errors.usernameOrEmail?.message === "string"
-                    ? errors.usernameOrEmail.message
+                  typeof errors.email?.message === "string"
+                    ? errors.email.message
                     : undefined
                 }
                 InputProps={{
@@ -188,6 +206,7 @@ const Login = ({activeTab,setActiveTab}:{activeTab:number,setActiveTab:any}) => 
 
             <Button
               fullWidth
+              loading={loading} 
               variant="contained"
               size="large"
               type="submit"

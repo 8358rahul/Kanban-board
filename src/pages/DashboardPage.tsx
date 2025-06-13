@@ -9,7 +9,7 @@ import {
   useTheme
 } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchTasksStart, fetchTasksSuccess } from '../store/kanbanSlice';
+import { fetchTasksFailure, fetchTasksStart, fetchTasksSuccess } from '../store/kanbanSlice';
 import { fetchTasks } from '../api/taskApi';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -22,18 +22,24 @@ const DashboardPage  = () => {
   const theme = useTheme();   
   
   useEffect(() => {
-    if (user) {
-      const loadTasks = async () => {
-        try {
-          dispatch(fetchTasksStart());
-          let response = await fetchTasks();   
-          const filteredTasks = response.filter(task => task.userId === user.id);
-          
-          dispatch(fetchTasksSuccess(filteredTasks)); 
-        } catch (err) {
-          console.error(err);
-        }
-      };
+    if (user) { 
+         const loadTasks = async () => {
+              try {
+                dispatch(fetchTasksStart());
+                let response = await fetchTasks();
+                const filteredTasks = response.filter(
+                  (task) => task.userId === user.id
+                );
+      
+                dispatch(fetchTasksSuccess(filteredTasks));
+              } catch (err) {
+                dispatch(
+                  fetchTasksFailure(
+                    err instanceof Error ? err.message : "Failed to load tasks"
+                  )
+                );
+              }
+            };
       loadTasks();
     }
   }, [user, dispatch]);
@@ -167,7 +173,9 @@ const DashboardPage  = () => {
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={statusData}>
                       <XAxis dataKey="name" />
-                      <YAxis />
+                      <YAxis
+                        allowDecimals={false}
+                      />
                       <Tooltip />
                       <Bar 
                         dataKey="value" 
